@@ -6343,7 +6343,14 @@ function setMode(mode){
 // tab hidden when there's no BO data. Each of BO / Stock / Gudang is fully
 // independent — any single one being present is enough to open this bar.
 function updateBOSubtabsVisibility(){
-  const hasBO = BO_LOADED && BO_RAW.length>0;
+  // hasBO also counts BO_BASE_STAGED/BO_NEW_STAGED (files picked but not yet
+  // committed via submit) — not just BO_LOADED/BO_RAW. Without this, e.g.
+  // uploading BO then Stock then Gudang (all before clicking submit) would
+  // see hasBO as false while staging, wrongly fall back the default sub-tab
+  // to Stock, and that wrong default would stick even after submit commits
+  // the BO data (since BO_SUBTAB only re-corrects when the CURRENT sub-tab
+  // becomes unavailable, not when a higher-priority one becomes available).
+  const hasBO = (BO_LOADED && BO_RAW.length>0) || !!(BO_BASE_STAGED || BO_NEW_STAGED);
   const hasStock = hasAnyStock();
   const hasGudang = (typeof GUDANG_RAW!=="undefined") && GUDANG_RAW.length>0;
   const bar=document.getElementById('boSubtabs');
