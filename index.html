@@ -1668,7 +1668,7 @@ function ingestProduct(rows){
   if(!rows||!rows.length) return false;
   let n=0;
   for(const row of rows){
-    const code=pick(row,"Code","Mat Group","Mat Grup","Matl group","Kode");
+    const code=pick(row,"Matl group","Material Group","Mat Group","Mat Grup","Code","Kode");
     const grp =pick(row,"Product Group","Product Grup","Group","Grup");   // coarse
     const name=pick(row,"Product","Nama","Name");                          // fine
     if(code===undefined||String(code).trim()==="") continue;
@@ -5196,7 +5196,7 @@ function wireUpdateModal(){
     readConfigFile(e.target.files[0], rows=>{
       const n=ingestProduct(rows);
       pMsg.innerHTML = n ? "<span style='color:#1a7a4c;font-weight:600;'>✓ "+n+" pemetaan produk ditambahkan/diperbarui</span>"
-                         : "<span style='color:var(--red)'>Tidak ada baris valid (cek kolom Code & Product).</span>";
+                         : "<span style='color:var(--red)'>Tidak ada baris valid (cek kolom Material Group / Code & Product).</span>";
     }, pMsg);
   });
 
@@ -5212,7 +5212,7 @@ function wireUpdateModal(){
   // templates
   const pTpl=document.getElementById('updProductTpl');
   if(pTpl) pTpl.addEventListener('click', e=>{ e.preventDefault(); downloadCSVTemplate("template_produk.csv",
-    ["Code","Product","Product Group"], [["HND-99Z","CONTOH PRODUK BARU","HGP"],["ACC-01","CONTOH AKSESORIS","Tools"]]); });
+    ["Material Group","Product","Product Group"], [["HND-99Z","CONTOH PRODUK BARU","HGP"],["ACC-01","CONTOH AKSESORIS","Tools"]]); });
   const cTpl=document.getElementById('updCgrpTpl');
   if(cTpl) cTpl.addEventListener('click', e=>{ e.preventDefault(); downloadCSVTemplate("template_cgrp.csv",
     ["Code","Group"], [["Z9","GROUP BARU CONTOH"],["X1","DEALER BESAR"]]); });
@@ -6968,7 +6968,7 @@ if(document.readyState==='loading'){
 
     <div style="margin-bottom:16px;padding:12px 14px;border:1px solid var(--line);border-radius:9px;">
       <div style="font-weight:600;font-size:13px;color:var(--blue);margin-bottom:6px;">📦 Nama Produk (Mat Group → nama)</div>
-      <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Kolom: <code>Code</code> / <code>Mat Group</code>, lalu <code>Product</code> (nama detail) dan/atau <code>Product Group</code> (grup).</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Kolom: <code>Material Group</code> (atau <code>Code</code>), lalu <code>Product</code> (nama detail) dan/atau <code>Product Group</code> (grup).</div>
       <label class="btn btn-soft" for="updProductInput" style="font-size:12px;padding:7px 12px;">Pilih File Produk</label>
       <input type="file" id="updProductInput" accept=".xlsx,.xls,.csv" style="display:none;">
       <a href="#" id="updProductTpl" style="font-size:12px;color:var(--blue);margin-left:10px;">Template</a>
