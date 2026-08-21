@@ -836,6 +836,10 @@
           </h3>
           <div class="kpi-grid kpi-3" id="boTvaRunKpi" style="margin:0 0 14px;"></div>
           <div class="tva-controls">
+            <span class="toggle" id="boTvaProdLevelToggle" style="display:none;">
+              <button class="tg active" id="boTvaProdLvlGroup" data-mode="group">Group</button>
+              <button class="tg" id="boTvaProdLvlProduct" data-mode="product">Product</button>
+            </span>
             <span style="font-size:12px;color:var(--muted);">Sumber:</span>
             <span class="toggle" id="boTvaSourceToggle" title="Pakai Order atau Supply untuk Actual">
               <button class="tg active" id="boTvaSrcOrder" data-mode="order">Order</button>
@@ -3433,9 +3437,14 @@ wireMultiToggle(['ovTrendMNet','ovTrendMGross','ovTrendMProfit'], m=>OV_TREND_ME
 wireMultiToggle(['tvaLvlSalesman','tvaLvlProduct','tvaLvlDealer'], m=>TVA_LEVEL=m, ()=>renderTargetVsActual(CURRENT_ROWS));
 wireMultiToggle(['tvaMetricNet','tvaMetricQty'], m=>TVA_METRIC=m, ()=>renderTargetVsActual(CURRENT_ROWS));
 // BO Target vs Actual level/metric toggles (separate state: BO_TVA_LEVEL / BO_TVA_METRIC)
-wireMultiToggle(['boTvaLvlSalesman','boTvaLvlProduct','boTvaLvlDealer'], m=>BO_TVA_LEVEL=m, ()=>renderBOTargetVsActual(BO_CURRENT));
+wireMultiToggle(['boTvaLvlSalesman','boTvaLvlProduct','boTvaLvlDealer'], m=>{
+  BO_TVA_LEVEL=m;
+  const pt=document.getElementById('boTvaProdLevelToggle');
+  if(pt) pt.style.display = (m==="product") ? "" : "none";
+}, ()=>renderBOTargetVsActual(BO_CURRENT));
 wireMultiToggle(['boTvaMetricNet','boTvaMetricQty'], m=>BO_TVA_METRIC=m, ()=>renderBOTargetVsActual(BO_CURRENT));
 wireMultiToggle(['boTvaSrcOrder','boTvaSrcSupply'], m=>BO_TVA_SOURCE=m, ()=>renderBOTargetVsActual(BO_CURRENT));
+wireMultiToggle(['boTvaProdLvlGroup','boTvaProdLvlProduct'], m=>BO_TVA_PROD_LEVEL=m, ()=>renderBOTargetVsActual(BO_CURRENT));
 
 // ---- Target upload inputs (6): Omzet {salesman,product,dealer} + BO {salesman,product,dealer} ----
 (function wireTargetUploads(){
@@ -3925,6 +3934,7 @@ function renderTargetVsActual(rows){
 
 // ---- BO Target vs Actual (separate stores, BO metric fields) ----
 let BO_TVA_LEVEL="salesman", BO_TVA_METRIC="net", BO_TVA_SOURCE="order";
+let BO_TVA_PROD_LEVEL="group";   // "group" | "product" — only relevant when BO_TVA_LEVEL==="product"
 function boTvaSelectedMonths(){
   // reuse the BO main selection months; fall back to all present months
   const m=boSelectedMonths();
@@ -3953,18 +3963,20 @@ function renderBOTargetVsActual(rows){
   const fmt=(x)=> isQty? intFmt(x)+" unit" : kFmt(x);
   const months=boTvaSelectedMonths();
 
+  const prodIsFine = level==="product" && BO_TVA_PROD_LEVEL==="product";
   const keyFn = level==="salesman" ? (r=>boSalesmanName(r))
-             : level==="product"  ? (r=>productName(r["Mat Group"]))
+             : level==="product"  ? (prodIsFine ? (r=>productLevelName(r["Mat Group"])) : (r=>productName(r["Mat Group"])))
              : (r=>fieldVal(r,"Customer Name"));
   const actual=new Map();
   for(const r of rows){ const k=keyFn(r); actual.set(k,(actual.get(k)||0)+boNum(r[valField])); }
 
   const s=tvaStores("bo");
   const targetsAvailable = loadedFor(s, level);
-  const levelLabel = level==="salesman"?"Salesman":level==="product"?"Product":"Dealer";
+  const levelLabel = level==="salesman"?"Salesman":level==="product"?(prodIsFine?"Product":"Product Group"):"Dealer";
   scopeNote.textContent = "Actual: "+srcLabel+" "+(isQty?"Qty":"Net")+" · "
     + (months.length? months.map(ymToLabel).join(", ") : "semua periode")
-    + (targetsAvailable? "" : " · target "+levelLabel+" BO belum diupload");
+    + (targetsAvailable? "" : " · target "+levelLabel+" BO belum diupload")
+    + (prodIsFine? " · target diupload per Product Group akan cocok jika nama cocok persis dengan nama Product" : "");
 
   let totActual=0; for(const v of actual.values()) totActual+=v;
   let totMonthly=0, totRunning=0;
